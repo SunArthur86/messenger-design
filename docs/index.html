@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>消息系统架构调研 — 交互式文档</title>
+<meta name="description" content="11+ 款国内外消息 APP 技术架构调研、设计方案、60道面试题、术语表">
+<meta name="keywords" content="IM,即时通讯,消息系统,飞书,微信,QQ,Telegram,WhatsApp,架构设计,面试">
+<meta name="author" content="SunArthur86">
+<meta name="theme-color" content="#0071e3">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+<style>
+*,:before,:after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fff;--bg2:#f5f5f7;--bg3:#fafafa;
+  --text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;
+  --accent:#0071e3;--card:#fff;--border:#d2d2d7;
+  --code-bg:#f5f5f7;--code-text:#c7254e;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --sidebar-w:280px;
+  --serif:"Georgia","Times New Roman",serif;
+}
+[data-theme="dark"]{
+  --bg:#000;--bg2:#1c1c1e;--bg3:#2c2c2e;
+  --text:#f5f5f7;--text2:#98989d;--text3:#636366;
+  --accent:#0a84ff;--card:#1c1c1e;--border:#38383a;
+  --code-bg:#2c2c2e;--code-text:#ff7b72;
+  --shadow:0 2px 12px rgba(0,0,0,.3);
+}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+
+/* Progress bar */
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),#5856d6);z-index:9999;width:0%;transition:width .2s}
+
+/* Top nav */
+.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:16px}
+[data-theme="dark"] .nav{background:rgba(0,0,0,.72)}
+.nav-logo{font-family:var(--serif);font-size:1.05rem;font-weight:700;white-space:nowrap}
+.nav-search{flex:1;max-width:400px;position:relative}
+.nav-search input{width:100%;padding:8px 12px 8px 36px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text);font-size:.88rem;font-family:inherit;outline:none;transition:border-color .2s}
+.nav-search input:focus{border-color:var(--accent)}
+.nav-search .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.9rem;pointer-events:none}
+.nav-btns{display:flex;gap:8px;align-items:center}
+.nav-btn{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg2);color:var(--text2);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+.nav-btn:hover{background:var(--border);color:var(--text)}
+.sidebar-toggle{display:none}
+
+/* Layout */
+.layout{display:flex;max-width:1200px;margin:0 auto}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;padding:20px 12px;border-right:.5px solid var(--border)}
+.sidebar-section{margin-bottom:16px}
+.sidebar-title{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:0 12px;margin-bottom:6px}
+.sidebar-link{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:.85rem;color:var(--text2);cursor:pointer;transition:.15s;text-decoration:none;line-height:1.4}
+.sidebar-link:hover{background:var(--bg2);color:var(--text)}
+.sidebar-link.active{background:rgba(0,113,227,.1);color:var(--accent);font-weight:600}
+.sidebar-sub{padding-left:12px;margin-top:2px}
+.sidebar-sub a{display:block;padding:4px 12px 4px 24px;font-size:.78rem;color:var(--text3);border-radius:6px;cursor:pointer;transition:.15s;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-sub a:hover{color:var(--accent);background:var(--bg2)}
+.sidebar-sub a.active{color:var(--accent);font-weight:600}
+
+/* Content */
+.content{flex:1;min-width:0;padding:40px 48px 80px;max-width:800px}
+.doc-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.doc-header h1{font-family:var(--serif);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:8px}
+.doc-meta{font-size:.82rem;color:var(--text3);display:flex;gap:16px;align-items:center}
+.doc-meta span{display:inline-flex;align-items:center;gap:4px}
+.doc-body{font-size:.95rem;line-height:1.8}
+.doc-body h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.doc-body h2{font-family:var(--serif);font-size:1.3rem;font-weight:700;margin:28px 0 12px}
+.doc-body h3{font-size:1.05rem;font-weight:600;margin:20px 0 8px;color:var(--text)}
+.doc-body p{margin-bottom:14px}
+.doc-body ul,.doc-body ol{margin-bottom:14px;padding-left:24px}
+.doc-body li{margin-bottom:6px}
+.doc-body blockquote{margin:16px 0;padding:12px 16px;background:var(--bg2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;color:var(--text2);font-size:.9rem}
+.doc-body code{background:var(--code-bg);color:var(--code-text);padding:2px 6px;border-radius:4px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.85em}
+.doc-body pre{background:var(--code-bg);padding:16px;border-radius:10px;overflow-x:auto;margin:16px 0;font-size:.82rem;line-height:1.5}
+.doc-body pre code{background:none;color:var(--text);padding:0}
+.doc-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.85rem}
+.doc-body th{background:var(--bg2);font-weight:600;text-align:left;padding:10px 12px;border:.5px solid var(--border)}
+.doc-body td{padding:8px 12px;border:.5px solid var(--border)}
+.doc-body strong{font-weight:700;color:var(--text)}
+.doc-body hr{border:none;border-top:1px solid var(--border);margin:24px 0}
+.doc-body mark{background:rgba(255,235,59,.3);border-radius:2px;padding:0 2px}
+
+/* Search results */
+.search-results{position:fixed;top:52px;left:0;right:0;max-height:400px;overflow-y:auto;background:var(--bg);border-bottom:1px solid var(--border);box-shadow:var(--shadow);z-index:99;display:none}
+.search-results.show{display:block}
+.search-item{padding:10px 24px;cursor:pointer;border-bottom:.5px solid var(--border);transition:.15s}
+.search-item:hover{background:var(--bg2)}
+.search-item-title{font-size:.88rem;font-weight:600;color:var(--accent)}
+.search-item-preview{font-size:.8rem;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Scroll top */
+.scroll-top{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;border:none;background:var(--card);color:var(--text2);box-shadow:0 4px 20px rgba(0,0,0,.12);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.2s;opacity:0;transform:scale(.8);pointer-events:none;z-index:80}
+.scroll-top.visible{opacity:1;transform:scale(1);pointer-events:auto}
+.scroll-top:hover{background:var(--accent);color:#fff}
+
+/* Footer */
+.doc-footer{text-align:center;padding:32px 0 0;color:var(--text3);font-size:.8rem;border-top:1px solid var(--border);margin-top:48px}
+
+/* Loading */
+.loading{text-align:center;padding:80px 24px;color:var(--text3)}
+.loading-spinner{width:32px;height:32px;border:3px solid var(--bg2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:52px;width:280px;background:var(--bg);z-index:95;transform:translateX(-100%);transition:transform .3s;box-shadow:var(--shadow)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-toggle{display:flex}
+  .content{padding:24px 20px 60px}
+  .nav-logo{font-size:.9rem}
+  .nav-search{max-width:200px}
+}
+@media print{
+  .nav,.sidebar,.scroll-top,.progress-bar,.search-results{display:none!important}
+  .content{max-width:100%;padding:0}
+  body{background:#fff;color:#000}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="nav">
+  <button class="nav-btn sidebar-toggle" id="sidebarToggle" aria-label="切换目录">☰</button>
+  <div class="nav-logo">💬 消息系统架构</div>
+  <div class="nav-search">
+    <span class="icon">🔍</span>
+    <input type="search" id="searchInput" placeholder="搜索文档内容…" autocomplete="off" aria-label="搜索">
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn" id="themeToggle" title="深色模式" aria-label="切换深色模式">🌙</button>
+  </div>
+</nav>
+
+<div class="search-results" id="searchResults"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <!-- Built by JS -->
+  </aside>
+  <main class="content">
+    <div id="docContent">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        加载中…
+      </div>
+    </div>
+  </main>
+</div>
+
+<button class="scroll-top" id="scrollTop" aria-label="回到顶部">↑</button>
+
+<script>
+// === DOC MANIFEST ===
+const DOCS=[
+  {file:"01-research.md",icon:"🔬",title:"飞书/微信/QQ 架构调研",short:"核心调研"},
+  {file:"02-design.md",icon:"📐",title:"消息系统设计方案",short:"设计方案"},
+  {file:"03-overseas.md",icon:"🌍",title:"海外 IM 架构调研",short:"海外调研"},
+  {file:"04-domestic.md",icon:"🏠",title:"国内 IM 架构调研",short:"国内调研"},
+  {file:"05-comparison.md",icon:"⚖️",title:"全景对比与选型",short:"对比选型"},
+  {file:"06-interview.md",icon:"📝",title:"IM 面试题集 (60题)",short:"面试题"},
+  {file:"07-glossary.md",icon:"📖",title:"IM 术语表",short:"术语表"}
+];
+
+let currentDoc=0;
+let allDocs={}; // cached content
+let searchIndex=[];
+
+// === SAFE STORAGE ===
+function safeGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+// === THEME ===
+function getTheme(){return safeGet("md-theme",null)||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")}
+function setTheme(t){document.documentElement.setAttribute("data-theme",t);safeSet("md-theme",t);document.getElementById("themeToggle").textContent=t==="dark"?"☀️":"🌙"}
+
+// === MARKDOWN PARSER ===
+function parseMd(md){
+  // Extract code blocks first
+  const codeBlocks=[];
+  md=md.replace(/```(\w*)\n([\s\S]*?)```/g,function(m,lang,code){
+    codeBlocks.push('<pre><code>'+escHtml(code.trim())+'</code></pre>');
+    return '\x00CODEBLOCK'+(codeBlocks.length-1)+'\x00';
+  });
+
+  // Tables
+  md=md.replace(/^(\|.+\|)\n(\|[-:| ]+\|)\n((?:\|.+\|\n?)*)/gm,function(m,hdr,sep,body){
+    const headers=hdr.split('|').filter(function(x){return x.trim()}).map(function(x){return x.trim()});
+    const rows=body.trim().split('\n').map(function(r){return r.split('|').filter(function(x){return x.trim()}).map(function(x){return x.trim()})});
+    let html='<table><thead><tr>'+headers.map(function(h){return'<th>'+parseInline(h)+'</th>'}).join('')+'</tr></thead><tbody>';
+    rows.forEach(function(r){html+='<tr>'+r.map(function(c){return'<td>'+parseInline(c)+'</td>'}).join('')+'</tr>'});
+    html+='</tbody></table>';
+    return html;
+  });
+
+  const lines=md.split('\n');
+  let html='',inList=false,listType='';
+  
+  for(let i=0;i<lines.length;i++){
+    let line=lines[i];
+    
+    // Codeblock placeholder
+    const cbMatch=line.match(/^\x00CODEBLOCK(\d+)\x00$/);
+    if(cbMatch){if(inList){html+='</'+listType+'>';inList=false}html+=codeBlocks[parseInt(cbMatch[1])];continue}
+    
+    // Headings
+    const hMatch=line.match(/^(#{1,3})\s+(.+)/);
+    if(hMatch){if(inList){html+='</'+listType+'>';inList=false}const lv=hMatch[1].length;html+='<h'+lv+'>'+parseInline(hMatch[2])+'</h'+lv+'>';continue}
+    
+    // HR
+    if(line.trim()==='---'||line.trim()==='***'){if(inList){html+='</'+listType+'>';inList=false}html+='<hr>';continue}
+    
+    // Blockquote
+    if(line.startsWith('>')){if(inList){html+='</'+listType+'>';inList=false}html+='<blockquote>'+parseInline(line.replace(/^>\s?/,''))+'</blockquote>';continue}
+    
+    // List items
+    const liMatch=line.match(/^(\s*)[-*]\s+(.+)/);
+    const olMatch=line.match(/^(\s*)\d+\.\s+(.+)/);
+    
+    if(liMatch){
+      if(!inList||listType!=='ul'){if(inList)html+='</'+listType+'>';html+='<ul>';inList=true;listType='ul'}
+      html+='<li>'+parseInline(liMatch[2])+'</li>';continue
+    }
+    if(olMatch){
+      if(!inList||listType!=='ol'){if(inList)html+='</'+listType+'>';html+='<ol>';inList=true;listType='ol'}
+      html+='<li>'+parseInline(olMatch[2])+'</li>';continue
+    }
+    
+    // Empty line
+    if(line.trim()===''){if(inList){html+='</'+listType+'>';inList=false}continue}
+    
+    // Paragraph
+    if(inList){html+='</'+listType+'>';inList=false}
+    html+='<p>'+parseInline(line)+'</p>';
+  }
+  if(inList)html+='</'+listType+'>';
+  return html;
+}
+
+function parseInline(text){
+  return text
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// === SIDEBAR ===
+function buildSidebar(){
+  const sb=document.getElementById("sidebar");
+  let html='<div class="sidebar-section"><div class="sidebar-title">📑 文档目录</div>';
+  DOCS.forEach(function(d,i){
+    html+='<a class="sidebar-link'+(i===currentDoc?" active":"")+'" data-doc="'+i+'">'+d.icon+' '+d.short+'</a>';
+    // Sub-headings for current doc
+    if(i===currentDoc&&allDocs[d.file]){
+      const heads=extractHeadings(allDocs[d.file]);
+      if(heads.length){
+        html+='<div class="sidebar-sub">';
+        heads.forEach(function(h){
+          html+='<a data-doc="'+i+'" data-scroll="'+escAttr(h.id)+'">'+escHtml(h.text)+'</a>';
+        });
+        html+='</div>';
+      }
+    }
+  });
+  html+='</div>';
+  sb.innerHTML=html;
+}
+
+function escAttr(s){return s.replace(/"/g,'&quot;')}
+
+function extractHeadings(md){
+  const heads=[];
+  md.split('\n').forEach(function(line){
+    const m=line.match(/^(#{1,2})\s+(.+)/);
+    if(m){
+      const text=m[2].replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s\-（）]/g,'').trim();
+      const id=text.replace(/\s+/g,'-').toLowerCase().substring(0,40);
+      heads.push({level:m[1].length,text:text,id:id});
+    }
+  });
+  return heads.slice(0,20); // limit
+}
+
+// === LOAD DOC ===
+async function loadDoc(idx){
+  currentDoc=idx;
+  const d=DOCS[idx];
+  const container=document.getElementById("docContent");
+  
+  if(!allDocs[d.file]){
+    container.innerHTML='<div class="loading"><div class="loading-spinner"></div>加载中…</div>';
+    try{
+      const resp=await fetch(d.file);
+      allDocs[d.file]=await resp.text();
+      // Build search index
+      buildSearchIndex();
+    }catch(e){
+      container.innerHTML='<div class="loading">⚠️ 加载失败，请确保通过 HTTP 服务器访问。</div>';
+      return;
+    }
+  }
+  
+  const md=allDocs[d.file];
+  const html=parseMd(md);
+  const lines=md.split('\n').length;
+  const readTime=Math.ceil(lines/200);
+  
+  // Find first heading as title
+  const titleMatch=md.match(/^#\s+(.+)/m);
+  const title=titleMatch?titleMatch[1]:d.title;
+  
+  container.innerHTML='<div class="doc-header"><h1>'+escHtml(title)+'</h1><div class="doc-meta"><span>📄 '+lines+' 行</span><span>⏱ ~'+readTime+' 分钟</span><span>📁 '+d.file+'</span></div></div><div class="doc-body">'+html+'</div><div class="doc-footer">📚 消息系统架构调研 · 2026 · <a href="https://github.com/SunArthur86/messenger-design" target="_blank">GitHub</a></div>';
+  
+  // Add IDs to headings for scroll
+  container.querySelectorAll('.doc-body h1, .doc-body h2').forEach(function(h,i){
+    const text=h.textContent.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s\-（）]/g,'').trim();
+    h.id=text.replace(/\s+/g,'-').toLowerCase().substring(0,40);
+  });
+  
+  buildSidebar();
+  safeSet("md-current-doc",idx);
+  window.scrollTo(0,0);
+  updateProgress();
+}
+
+// === SEARCH ===
+function buildSearchIndex(){
+  searchIndex=[];
+  Object.keys(allDocs).forEach(function(file){
+    const lines=allDocs[file].split('\n');
+    const docIdx=DOCS.findIndex(function(d){return d.file===file});
+    lines.forEach(function(line,i){
+      if(line.length>5&&line.trim()){
+        searchIndex.push({doc:docIdx,line:i,text:line.replace(/[#*>`|]/g,'').trim()});
+      }
+    });
+  });
+}
+
+let searchTimer;
+const searchInput=document.getElementById("searchInput");
+const searchResults=document.getElementById("searchResults");
+searchInput.addEventListener("input",function(e){
+  clearTimeout(searchTimer);
+  const q=e.target.value.trim();
+  if(!q){searchResults.classList.remove("show");return}
+  searchTimer=setTimeout(function(){doSearch(q)},200);
+});
+
+function doSearch(q){
+  const ql=q.toLowerCase();
+  const matches=searchIndex.filter(function(item){
+    return item.text.toLowerCase().includes(ql);
+  }).slice(0,20);
+  
+  if(matches.length===0){
+    searchResults.innerHTML='<div class="search-item"><div class="search-item-title">无结果</div></div>';
+  }else{
+    searchResults.innerHTML=matches.map(function(m){
+      const doc=DOCS[m.doc];
+      return '<div class="search-item" data-doc="'+m.doc+'" data-text="'+escAttr(m.text.substring(0,100))+'"><div class="search-item-title">'+doc.icon+' '+doc.short+'</div><div class="search-item-preview">'+escHtml(m.text.substring(0,80))+'</div></div>';
+    }).join("");
+  }
+  searchResults.classList.add("show");
+}
+
+searchResults.addEventListener("click",function(e){
+  const item=e.target.closest(".search-item");
+  if(!item)return;
+  const docIdx=+item.dataset.doc;
+  searchResults.classList.remove("show");
+  searchInput.value="";
+  loadDoc(docIdx);
+});
+
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".nav-search")&&!e.target.closest(".search-results")){
+    searchResults.classList.remove("show");
+  }
+});
+
+// === SIDEBAR EVENTS ===
+document.getElementById("sidebar").addEventListener("click",function(e){
+  const link=e.target.closest("[data-doc]");
+  if(!link)return;
+  const idx=+link.dataset.doc;
+  if(link.dataset.scroll){
+    // Scroll to heading
+    loadDoc(idx).then(function(){
+      setTimeout(function(){
+        const el=document.getElementById(link.dataset.scroll);
+        if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+      },100);
+    });
+  }else{
+    loadDoc(idx);
+  }
+  // Close sidebar on mobile
+  if(window.innerWidth<=768)document.getElementById("sidebar").classList.remove("open");
+});
+
+// === MOBILE SIDEBAR ===
+document.getElementById("sidebarToggle").addEventListener("click",function(){
+  document.getElementById("sidebar").classList.toggle("open");
+});
+
+// === THEME ===
+document.getElementById("themeToggle").addEventListener("click",function(){setTheme(getTheme()==="dark"?"light":"dark")});
+
+// === SCROLL ===
+let scrollTicking=false;
+const scrollBtn=document.getElementById("scrollTop");
+window.addEventListener("scroll",function(){
+  if(!scrollTicking){
+    requestAnimationFrame(function(){
+      scrollBtn.classList.toggle("visible",window.scrollY>300);
+      updateProgress();
+      scrollTicking=false;
+    });
+    scrollTicking=true;
+  }
+},{passive:true});
+scrollBtn.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"})});
+
+function updateProgress(){
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  document.getElementById("progressBar").style.width=pct+"%";
+}
+
+// === KEYBOARD ===
+document.addEventListener("keydown",function(e){
+  if(e.target.tagName==="INPUT")return;
+  if(e.key==="ArrowLeft"&&currentDoc>0){loadDoc(currentDoc-1)}
+  else if(e.key==="ArrowRight"&&currentDoc<DOCS.length-1){loadDoc(currentDoc+1)}
+  else if(e.key==="/"){e.preventDefault();searchInput.focus()}
+  else if(e.key==="d"||e.key==="D"){document.getElementById("themeToggle").click()}
+  else if(e.key==="Escape"){searchResults.classList.remove("show");document.getElementById("sidebar").classList.remove("open")}
+});
+
+// === INIT ===
+setTheme(getTheme());
+buildSidebar();
+const savedDoc=safeGet("md-current-doc",0);
+loadDoc(savedDoc>=0&&savedDoc<DOCS.length?savedDoc:0);
+</script>
+</body>
+</html>
